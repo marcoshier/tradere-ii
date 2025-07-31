@@ -118,6 +118,9 @@ repositories {
 
 dependencies {
 
+    implementation(libs.lwjgl.openal)
+    implementation(libs.ffmpeg)
+
 //    implementation(libs.jsoup)
 //    implementation(libs.csv)
 
