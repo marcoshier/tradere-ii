@@ -1,3 +1,6 @@
+import org.lwjgl.openal.ALC11.ALC_ALL_DEVICES_SPECIFIER
+import org.lwjgl.openal.ALUtil
+import org.lwjgl.system.MemoryUtil
 import org.openrndr.application
 import org.openrndr.draw.ColorBuffer
 import org.openrndr.extra.imageFit.imageFit
@@ -9,11 +12,18 @@ var debug = false
 fun main() {
     application {
         configure {
-            width = 1280
-            height = 720
+            width = 1920
+            height = 1080
+            hideCursor = true
+            hideWindowDecorations = true
+            windowAlwaysOnTop = true
         }
 
         program {
+
+            println(
+                ALUtil.getStringList(MemoryUtil.NULL, ALC_ALL_DEVICES_SPECIFIER)!!
+            )
 
             val cs = ChapterService()
             val vs = VideoService(this, cs)
@@ -91,7 +101,7 @@ fun main() {
                 }
 
 
-                cs.debugView(drawer)
+               // cs.debugView(drawer)
             }
         }
     }
