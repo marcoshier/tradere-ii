@@ -4,7 +4,7 @@ import org.openrndr.draw.Drawer
 
 private val logger = KotlinLogging.logger {  }
 
-class ChapterService {
+class ChapterService() {
 
     val chapters = listOf(
         "stendalidocumentario",
@@ -17,22 +17,23 @@ class ChapterService {
 
 
     val subchapters = listOf(
-        listOf(1, 2, 3),
-        listOf(1, 2),
-        listOf(1, 2, 3)
+        listOf(0, 1, 2),
+        listOf(0, 1),
+        listOf(0, 1, 2)
     )
 
     var currentSubchapter = 0
 
 
     fun step() {
+
         val nextSubchapter = currentSubchapter + 1
 
         if (nextSubchapter > subchapters[currentChapter].last()) {
             val nextChapter = (currentChapter + 1).mod(chapters.size)
             logger.info { "Stepping to next chapter $nextChapter" }
             currentChapter = nextChapter
-            currentSubchapter = 1
+            currentSubchapter = 0
             return
         }
 

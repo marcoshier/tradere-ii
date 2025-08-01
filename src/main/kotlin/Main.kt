@@ -1,9 +1,8 @@
-import audio.AudioDeviceDescription
-import audio.AudioDeviceService
 import org.openrndr.application
-import org.openrndr.color.ColorRGBa
+import org.openrndr.draw.ColorBuffer
+import org.openrndr.extra.imageFit.imageFit
 import org.openrndr.launch
-import org.openrndr.shape.IntRectangle
+import kotlin.math.abs
 
 var debug = false
 
@@ -17,57 +16,82 @@ fun main() {
         program {
 
             val cs = ChapterService()
-            val ads = AudioDeviceService(mapOf(
-                    "main" to AudioDeviceDescription("main", 0.0)
-                )
-            )
+            val vs = VideoService(this, cs)
             val ts = TrackingService()
-            val vs = VideoService(this, ads)
-            val ll = LightLeaks(this, ads)
 
+            var mode = "video"
 
-            var mode = "lights"
+            fun presence() {
+                mode = "video"
+                vs.loops[cs.currentChapter].pause()
 
-/*            if (debug) {
-                keyboard.character.listen {
-                    when(it.character) {
-                        'a' -> ts.presence.trigger(Unit)
-                        's' -> ts.absence.trigger(Unit)
-                    }
+                if (vs.videos[cs.currentChapter][cs.currentSubchapter].position != 0.0) {
+                    vs.videos[cs.currentChapter][cs.currentSubchapter].resume()
+                } else {
+                    vs.videos[cs.currentChapter][cs.currentSubchapter].seek(0.0)
+                    cs.step()
                 }
-            } else {
+            }
 
-            }*/
+            fun absence() {
+                mode = "lights"
+                vs.videos[cs.currentChapter][cs.currentSubchapter].pause()
+
+                Thread.sleep(1000)
+                vs.loops[cs.currentChapter].seek(0.0)
+            }
 
             launch {
                 ts.startTracking()
             }
 
             ts.presence.listen {
-                ll.close()
-                cs.step()
-                vs.set(cs.chapters[cs.currentChapter], cs.currentSubchapter)
-                mode = "video"
+                presence()
             }
 
             ts.absence.listen {
-                vs.close()
-                ll.set(cs.chapters[cs.currentChapter])
-                mode = "lights"
+                absence()
             }
+
+            keyboard.character.listen {
+                when(it.character) {
+                    'a' -> presence()
+                    's' -> absence()
+                }
+            }
+
 
             extend {
 
                 if (mode == "video") {
-                    vs.draw()
+                    val video = vs.videos[cs.currentChapter][cs.currentSubchapter]
+                    video.draw(drawer, true)
+
+                    video.colorBuffer?.let {
+                        drawer.imageFit(it, drawer.bounds)
+                    }
+
                 } else {
-                    ll.draw()
+                    val video = vs.loops[cs.currentChapter]
+                    video.draw(drawer, true)
+
+                    video.colorBuffer?.let {
+                        drawer.imageFit(it, drawer.bounds)
+                    }
+                }
+
+
+                for ((i, videoGroup) in vs.videos.withIndex()) {
+                    for ((j, video) in videoGroup.withIndex()) {
+                        if (i == cs.currentChapter && j == cs.currentSubchapter && video.position >= video.duration - 3.0) {
+                            video.seek(0.0)
+                            cs.step()
+                        }
+                    }
                 }
 
 
                 cs.debugView(drawer)
-                ts.debugView(drawer)
-
             }
         }
     }
